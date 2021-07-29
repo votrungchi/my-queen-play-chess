@@ -28,14 +28,15 @@ import cv2
 import numpy as np
 import chess
 
-video_source = 'http://192.168.1.4:8080/video'
+video_source = 'http://192.168.1.2:8080/video'
 resolution = (800, 800)
 board_size, _ = resolution
 square_size = int(board_size / 8)
 
-config_path = os.path.dirname(os.path.realpath(__file__)) + "/config" # path of current directory
+config_path = os.path.dirname(os.path.realpath(__file__)) + "/config"
+engine_path = os.path.dirname(os.path.realpath(__file__)) + "/engine/stockfish_14_x64_avx2.exe"
 
-player_color = chess.WHITE
+human = chess.WHITE
 
 # initialize variable for config board perspective
 img = 0
@@ -54,16 +55,19 @@ def setup():
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
+    print("Do you want to setup the board warp perspective [y/N]?")
+    ans = str(input())
+    if ans == "y" or ans == "Y":
+        get_board_perspective()
 
-    # get_board_perspective()
     pts1 = np.load(config_path + '/chess_board_warp_perspective.npz')['pts1']
     pts2 = np.load(config_path + '/chess_board_warp_perspective.npz')['pts2']
 
-
 def draw_square(img, square, color=(0, 0, 0), thickness=3):
     # calculate box location to draw the move
-    box = [((square % 8) * square_size, board_size - (int(square / 8) + 1) * square_size), # x
-              (((square % 8) + 1) * square_size, board_size - int(square / 8) * square_size)] # y
+    x = int(square % 8)
+    y = int(square / 8)
+    box = [(x * square_size, y * square_size), ((x + 1) * square_size, (y + 1) * square_size)]
     cv2.rectangle(img, box[0], box[1], color=color, thickness=thickness)
 
 def draw_circle(event, x, y, flags, param):

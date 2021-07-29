@@ -29,7 +29,7 @@ from config import square_size
 
 def fen2board_bitmap(fen, turn):
     board_bitmap = []
-    for row in reversed(fen.split(' ')[0].split('/')):
+    for row in fen.split(' ')[0].split('/'):
         for square in list(row):
             if square.isnumeric():
                 for i in range(int(square)):
@@ -51,6 +51,9 @@ def fen2board_bitmap(fen, turn):
 
 def move_detect(img_old, img_new, fen, turn):
     board_bitmap = fen2board_bitmap(fen, turn)
+    move = chess.Move.null()
+    old_square = -1
+    new_square = -1
 
     image_diff = cv2.absdiff(img_old, img_new)
     image_diff_gray = cv2.cvtColor(image_diff, cv2.COLOR_BGR2GRAY)
@@ -75,22 +78,15 @@ def move_detect(img_old, img_new, fen, turn):
             (x, y, w, h) = cv2.boundingRect(area[1])
             selected_contours_mid_point.append([x + int(w/2), y + int(h/2)])
 
-        old_square = -1
-        new_square = -1
-
         for mid_point in selected_contours_mid_point:
-            square = int((mid_point[0] / square_size)) + (8 * int(8 - (mid_point[1] / square_size)))
-            print(square)
+            square = int((mid_point[0] / square_size)) + (8 * int(mid_point[1] / square_size))
             if (board_bitmap[square] == 1):
                 old_square = square
             else:
                 new_square = square
 
         # move detected
-        print(old_square, new_square)
-        move_notation = chess.square_name(old_square) + chess.square_name(new_square)
-        print(move_notation)
+        move = chess.Move(chess.square_mirror(old_square), chess.square_mirror(new_square))
+        print(move)
 
-        return move_notation, old_square, new_square
-    else:
-        return " ", -1, -1
+    return move, old_square, new_square
